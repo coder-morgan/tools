@@ -1,0 +1,44 @@
+version: '3'
+
+networks:
+  frontend:
+    driver: ${NETWORKS_DRIVER}
+  backend:
+    driver: ${NETWORKS_DRIVER}
+
+volumes:
+  elasticsearch:
+    driver: ${VOLUMES_DRIVER}
+
+services:
+
+### Elasticsearch ##################################
+    elasticsearch:
+      build: ./elasticsearch
+      volumes:
+        - elasticsearch:/usr/share/elasticsearch/data
+      environment:
+        - cluster.name=laradock-cluster
+        - bootstrap.memory_lock=true
+        - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+      ulimits:
+        memlock:
+          soft: -1
+          hard: -1
+      ports:
+        - "${ELASTICSEARCH_HOST_HTTP_PORT}:9200"
+        - "${ELASTICSEARCH_HOST_TRANSPORT_PORT}:9300"
+      networks:
+        - frontend
+        - backend
+        
+### Kibana ##############################################
+    kibana:
+      build: ./kibana
+      ports:
+        - "${KIBANA_HTTP_PORT}:5601"
+      depends_on:
+        - elasticsearch
+      networks:
+        - frontend
+        - backend
